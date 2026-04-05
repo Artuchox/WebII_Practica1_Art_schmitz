@@ -2,22 +2,27 @@
 import AppError from '../utils/AppError.js'
 
 const validate = (schema) => (req, res, next) => {
-  const result = schema.safeParse({
-    body:   req.body,
-    params: req.params,
-    query:  req.query
-  })
+  try {
+    const result = schema.parse({
+      body:   req.body,
+      params: req.params,
+      query:  req.query
+    })
 
-  if (!result.success) {
-    const messages = result.error.errors.map(e => e.message).join(', ')
-    return next(AppError.badRequest(messages))
+    req.body   = result.body   ?? req.body
+    req.params = result.params ?? req.params
+
+    next()
+  } catch (error) {
+    console.log('Error en validate:', error.name, error.issues)
+
+    if (error.issues) {
+      const messages = error.issues.map(e => e.message).join(', ')
+      return next(AppError.badRequest(messages))
+    }
+
+    next(error)
   }
-
-  req.body   = result.data.body   ?? req.body
-  req.params = result.data.params ?? req.params
-  req.query  = result.data.query  ?? req.query
-
-  next()
 }
 
 export default validate
