@@ -59,3 +59,36 @@ export const register = async (req, res, next) => {
     next(error)
   }
 }
+
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body
+    const user = req.user
+
+    if (user.status === 'verified') {
+      throw AppError.badRequest('El email ya está verificado')
+    }
+
+    if (user.verificationAttempts <= 0) {
+      throw AppError.tooManyRequests('Has agotado los intentos de verificación')
+    }
+
+    if (user.verificationCode !== code) {
+      await User.findByIdAndUpdate(user._id, {
+        $inc: { verificationAttempts: -1 }
+      })
+      throw AppError.badRequest(`Código incorrecto. Intentos restantes: ${user.verificationAttempts - 1}`)
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      status: 'verified',
+      verificationCode: null
+    })
+
+    notificationService.emit('user:verified', { email: user.email })
+
+    res.status(200).json({ message: 'Email verificado correctamente' })
+  } catch (error) {
+    next(error)
+  }
+}
