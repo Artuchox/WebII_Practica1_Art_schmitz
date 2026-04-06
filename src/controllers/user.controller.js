@@ -314,3 +314,12 @@ export const inviteUser = async (req, res, next) => {
     next(error)
   }
 }
+export const getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate('company') 
+      .select('-password -verificationCode');
+    
+    res.status(200).json({ user });
+  } catch (error) { next(error); }
+};

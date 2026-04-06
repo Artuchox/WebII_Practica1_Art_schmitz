@@ -5,7 +5,7 @@ import upload from '../middleware/upload.js'
 import { authorize } from '../middleware/role.middleware.js'
 import { changePasswordSchema, inviteSchema  } from '../validators/user.validator.js';
 import { registerSchema, verificationSchema, loginSchema, personalDataSchema, companySchema } from '../validators/user.validator.js'
-import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile, refreshToken, logout, deleteUser, changePassword, inviteUser } from '../controllers/user.controller.js'
+import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile, refreshToken, logout, deleteUser, changePassword, inviteUser, getMe } from '../controllers/user.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
 const router = Router()
@@ -21,5 +21,7 @@ router.post('/refresh', refreshToken);
 router.post('/logout', authMiddleware, logout);
 router.delete('/', authMiddleware, deleteUser);
 router.put('/password', authMiddleware, validate(changePasswordSchema), changePassword);
+router.post('/invite', authMiddleware, authorize('admin'), validate(inviteSchema), inviteUser)
+router.get('/', authMiddleware, getMe);
 
 export default router
