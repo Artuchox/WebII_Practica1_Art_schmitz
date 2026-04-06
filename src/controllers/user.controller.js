@@ -121,3 +121,18 @@ export const login = async (req, res, next) => {
     next(error)
   }
 }
+export const updatePersonalData = async (req, res, next) => {
+  try {
+    const { name, lastName, nif } = req.body
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, lastName, nif },
+      { new: true }
+    ).select('-password -verificationCode')
+
+    res.status(200).json({ user })
+  } catch (error) {
+    next(error)
+  }
+}
