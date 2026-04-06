@@ -216,3 +216,16 @@ export const uploadLogo = async (req, res, next) => {
     next(error)
   }
 }
+
+export const getProfile = async (req, res, next) => {
+  try {
+    // Usamos populate para traer los datos de la compañía asociada
+    const user = await User.findById(req.user._id)
+      .populate('company')
+      .select('-password -verificationCode')
+
+    res.status(200).json({ user })
+  } catch (error) {
+    next(error)
+  }
+}
