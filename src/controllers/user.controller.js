@@ -92,3 +92,32 @@ export const verifyEmail = async (req, res, next) => {
     next(error)
   }
 }
+
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body
+
+    // Buscar usuario
+    const user = await User.findOne({ email })
+    if (!user) throw AppError.unauthorized('Credenciales incorrectas')
+
+    // Verificar contraseña
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) throw AppError.unauthorized('Credenciales incorrectas')
+
+    // Generar tokens
+    const { accessToken, refreshToken } = generateTokens(user._id)
+
+    res.status(200).json({
+      user: {
+        email: user.email,
+        status: user.status,
+        role: user.role
+      },
+      accessToken,
+      refreshToken
+    })
+  } catch (error) {
+    next(error)
+  }
+}
