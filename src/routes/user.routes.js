@@ -17,5 +17,6 @@ router.patch('/logo', authMiddleware, upload.single('logo'), uploadLogo)
 router.get('/', authMiddleware, getProfile)
 router.post('/refresh', refreshToken);
 router.post('/logout', authMiddleware, logout);
+router.delete('/', authMiddleware, deleteUser);
 
 export default router

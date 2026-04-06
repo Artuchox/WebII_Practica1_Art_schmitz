@@ -260,3 +260,25 @@ export const logout = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const isSoftDelete = req.query.soft === 'true';
+
+    if (isSoftDelete) {
+      // Borrado lógico: cambiamos el flag 'deleted'
+      await User.findByIdAndUpdate(userId, { deleted: true });
+    } else {
+      // Borrado físico: eliminamos el documento
+      await User.findByIdAndDelete(userId);
+    }
+
+    // Emitir evento de eliminación
+    notificationService.emit('user:deleted', { email: req.user.email });
+
+    res.status(200).json({ message: `Usuario eliminado (${isSoftDelete ? 'soft' : 'hard'})` });
+  } catch (error) {
+    next(error);
+  }
+};
