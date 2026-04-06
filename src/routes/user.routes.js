@@ -2,8 +2,9 @@
 import { Router } from 'express'
 import validate from '../middleware/validate.js'
 import upload from '../middleware/upload.js'
+import { changePasswordSchema } from '../validators/user.validator.js';
 import { registerSchema, verificationSchema, loginSchema, personalDataSchema, companySchema } from '../validators/user.validator.js'
-import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile, refreshToken, logout  } from '../controllers/user.controller.js'
+import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile, refreshToken, logout, deleteUser, changePassword  } from '../controllers/user.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
 const router = Router()
@@ -18,5 +19,6 @@ router.get('/', authMiddleware, getProfile)
 router.post('/refresh', refreshToken);
 router.post('/logout', authMiddleware, logout);
 router.delete('/', authMiddleware, deleteUser);
+router.put('/password', authMiddleware, validate(changePasswordSchema), changePassword);
 
 export default router
