@@ -186,3 +186,33 @@ export const updateCompany = async (req, res, next) => {
     next(error)
   }
 }
+
+export const uploadLogo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw AppError.badRequest('No se ha subido ningún archivo')
+    }
+
+    const user = req.user
+    if (!user.company) {
+      throw AppError.badRequest('El usuario no tiene una compañía asociada')
+    }
+
+    // Guardamos la ruta del archivo en el campo 'logo' de la compañía
+    const logoUrl = `/uploads/${req.file.filename}`
+    
+    const company = await Company.findByIdAndUpdate(
+      user.company,
+      { logo: logoUrl },
+      { new: true }
+    )
+
+    res.status(200).json({
+      message: 'Logo actualizado correctamente',
+      logo: logoUrl,
+      company
+    })
+  } catch (error) {
+    next(error)
+  }
+}
