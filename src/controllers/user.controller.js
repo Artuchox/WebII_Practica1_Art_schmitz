@@ -5,6 +5,7 @@ import User from '../models/User.js'
 import AppError from '../utils/AppError.js'
 import notificationService from '../services/notification.service.js'
 import env from '../config/env.js'
+import Company from '../models/Company.js'
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(
@@ -132,6 +133,55 @@ export const updatePersonalData = async (req, res, next) => {
     ).select('-password -verificationCode')
 
     res.status(200).json({ user })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const updateCompany = async (req, res, next) => {
+  try {
+    const { name, cif, address, isFreelance } = req.body
+    const user = req.user
+
+    let company
+
+    // Comprobar si ya existe una compañía con ese CIF
+    const existingCompany = await Company.findOne({ cif })
+
+    if (existingCompany) {
+      // Unirse a la compañía existente como guest
+      company = existingCompany
+      await User.findByIdAndUpdate(user._id, {
+        company: company._id,
+        role: 'guest'
+      })
+    } else {
+      // Crear nueva compañía
+      const companyData = isFreelance
+        ? {
+            // Autónomo: usa sus propios datos personales
+            owner: user._id,
+            name: user.name,
+            cif: user.nif,
+            address: user.address,
+            isFreelance: true
+          }
+        : {
+            owner: user._id,
+            name,
+            cif,
+            address,
+            isFreelance: false
+          }
+
+      company = await Company.create(companyData)
+
+      await User.findByIdAndUpdate(user._id, {
+        company: company._id
+      })
+    }
+
+    res.status(200).json({ company })
   } catch (error) {
     next(error)
   }
