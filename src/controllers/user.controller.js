@@ -98,15 +98,11 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body
 
-    // Buscar usuario
     const user = await User.findOne({ email })
     if (!user) throw AppError.unauthorized('Credenciales incorrectas')
 
-    // Verificar contraseña
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) throw AppError.unauthorized('Credenciales incorrectas')
-
-    // Generar tokens
     const { accessToken, refreshToken } = generateTokens(user._id)
 
     res.status(200).json({
@@ -144,22 +140,17 @@ export const updateCompany = async (req, res, next) => {
     const user = req.user
 
     let company
-
-    // Comprobar si ya existe una compañía con ese CIF
     const existingCompany = await Company.findOne({ cif })
 
     if (existingCompany) {
-      // Unirse a la compañía existente como guest
       company = existingCompany
       await User.findByIdAndUpdate(user._id, {
         company: company._id,
         role: 'guest'
       })
     } else {
-      // Crear nueva compañía
       const companyData = isFreelance
         ? {
-            // Autónomo: usa sus propios datos personales
             owner: user._id,
             name: user.name,
             cif: user.nif,
@@ -198,7 +189,6 @@ export const uploadLogo = async (req, res, next) => {
       throw AppError.badRequest('El usuario no tiene una compañía asociada')
     }
 
-    // Guardamos la ruta del archivo en el campo 'logo' de la compañía
     const logoUrl = `/uploads/${req.file.filename}`
     
     const company = await Company.findByIdAndUpdate(
@@ -219,7 +209,6 @@ export const uploadLogo = async (req, res, next) => {
 
 export const getProfile = async (req, res, next) => {
   try {
-    // Usamos populate para traer los datos de la compañía asociada
     const user = await User.findById(req.user._id)
       .populate('company')
       .select('-password -verificationCode')
@@ -238,23 +227,17 @@ export const refreshToken = async (req, res, next) => {
       throw AppError.unauthorized('Refresh token no proporcionado');
     }
 
-    // Verificar el token de refresco usando la clave secreta específica
     const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
-    
-    // Generar nuevos tokens (opcionalmente puedes rotar el refresh token aquí)
     const tokens = generateTokens(decoded.id);
 
     res.status(200).json(tokens);
   } catch (error) {
-    // Si el token ha expirado o es inválido
     next(AppError.unauthorized('Refresh token inválido o expirado'));
   }
 };
 
 export const logout = async (req, res, next) => {
   try {
-    // En una implementación real, aquí invalidarías el token en una lista negra o BD
-    // Por ahora, emitimos el evento y confirmamos el cierre
     res.status(200).json({ message: 'Sesión cerrada correctamente' });
   } catch (error) {
     next(error);
@@ -267,14 +250,11 @@ export const deleteUser = async (req, res, next) => {
     const isSoftDelete = req.query.soft === 'true';
 
     if (isSoftDelete) {
-      // Borrado lógico: cambiamos el flag 'deleted'
       await User.findByIdAndUpdate(userId, { deleted: true });
     } else {
-      // Borrado físico: eliminamos el documento
       await User.findByIdAndDelete(userId);
     }
 
-    // Emitir evento de eliminación
     notificationService.emit('user:deleted', { email: req.user.email });
 
     res.status(200).json({ message: `Usuario eliminado (${isSoftDelete ? 'soft' : 'hard'})` });
@@ -288,13 +268,11 @@ export const changePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user._id);
 
-    // 1. Verificar contraseña actual
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       throw AppError.unauthorized('La contraseña actual es incorrecta');
     }
 
-    // 2. Cifrar y guardar la nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await User.findByIdAndUpdate(req.user._id, { password: hashedPassword });
 
@@ -303,3 +281,36 @@ export const changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+export const inviteUser = async (req, res, next) => {
+  try {
+    const { email, name, lastName } = req.body
+    const adminUser = req.user 
+
+    const existingUser = await User.findOne({ email })
+    if (existingUser) throw AppError.conflict('El email ya está registrado en la plataforma')
+
+    const newUser = await User.create({
+      email,
+      name,
+      lastName,
+      password: 'temporaryPassword123',
+      role: 'guest',
+      company: adminUser.company,
+      status: 'pending' 
+    })
+
+    notificationService.emit('user:invited', { email: newUser.email })
+
+    res.status(201).json({
+      message: 'Usuario invitado correctamente',
+      user: {
+        email: newUser.email,
+        role: newUser.role,
+        company: newUser.company
+      }
+    })
+  } catch (error) {
+    next(error)
+  }
+}
