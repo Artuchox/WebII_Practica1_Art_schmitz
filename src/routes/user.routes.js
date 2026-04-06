@@ -3,7 +3,7 @@ import { Router } from 'express'
 import validate from '../middleware/validate.js'
 import upload from '../middleware/upload.js'
 import { registerSchema, verificationSchema, loginSchema, personalDataSchema, companySchema } from '../validators/user.validator.js'
-import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile  } from '../controllers/user.controller.js'
+import { register, verifyEmail, login, updatePersonalData, updateCompany, uploadLogo, getProfile, refreshToken, logout  } from '../controllers/user.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
 const router = Router()
@@ -15,5 +15,7 @@ router.put('/register', authMiddleware, validate(personalDataSchema), updatePers
 router.patch('/company', authMiddleware, validate(companySchema), updateCompany)
 router.patch('/logo', authMiddleware, upload.single('logo'), uploadLogo)
 router.get('/', authMiddleware, getProfile)
+router.post('/refresh', refreshToken);
+router.post('/logout', authMiddleware, logout);
 
 export default router

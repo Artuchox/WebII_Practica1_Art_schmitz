@@ -229,3 +229,34 @@ export const getProfile = async (req, res, next) => {
     next(error)
   }
 }
+
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      throw AppError.unauthorized('Refresh token no proporcionado');
+    }
+
+    // Verificar el token de refresco usando la clave secreta específica
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
+    
+    // Generar nuevos tokens (opcionalmente puedes rotar el refresh token aquí)
+    const tokens = generateTokens(decoded.id);
+
+    res.status(200).json(tokens);
+  } catch (error) {
+    // Si el token ha expirado o es inválido
+    next(AppError.unauthorized('Refresh token inválido o expirado'));
+  }
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    // En una implementación real, aquí invalidarías el token en una lista negra o BD
+    // Por ahora, emitimos el evento y confirmamos el cierre
+    res.status(200).json({ message: 'Sesión cerrada correctamente' });
+  } catch (error) {
+    next(error);
+  }
+};
