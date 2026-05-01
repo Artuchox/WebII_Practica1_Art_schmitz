@@ -13,13 +13,9 @@ export const createDeliveryNoteSchema = z.object({
     format:      z.enum(['material', 'hours'], { required_error: 'El formato es obligatorio' }),
     description: z.string().trim().optional(),
     workDate:    z.string().min(1, 'La fecha de trabajo es obligatoria'),
-
-    // Campos para format: 'material'
     material: z.string().trim().optional(),
     quantity: z.number().min(0).optional(),
     unit:     z.string().trim().optional(),
-
-    // Campos para format: 'hours'
     hours:   z.number().min(0).optional(),
     workers: z.array(workerSchema).optional()
   }).refine(
