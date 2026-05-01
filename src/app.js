@@ -5,6 +5,11 @@ import rateLimit from 'express-rate-limit';
 import errorHandler from './middleware/error-handler.js'
 import sanitizeBody from './middleware/sanitize.middleware.js';
 import userRoutes from './routes/user.routes.js'
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpecs from './docs/swagger.js';
+import morganBody from 'morgan-body';
+import { loggerStream } from './utils/handleLogger.js';
+
 
 const app = express()
 app.use(express.json());
@@ -18,11 +23,16 @@ app.use(rateLimit({
   legacyHeaders: false
 }));
 app.use('/uploads', express.static('uploads'))
+morganBody(app, {
+  noColors: true,
+  skip: (req, res) => res.statusCode < 400,
+  stream: loggerStream
+})
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' })
 })
-
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/api/user', userRoutes)
 app.use(errorHandler)
 
