@@ -3,7 +3,7 @@ import multer from 'multer'
 import path from 'node:path'
 import AppError from '../utils/AppError.js'
 
-const storage = multer.diskStorage({
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/')
   },
@@ -13,7 +13,9 @@ const storage = multer.diskStorage({
   }
 })
 
-const fileFilter = (req, file, cb) => {
+const memoryStorage = multer.memoryStorage()
+ 
+const imageFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true)
   } else {
@@ -22,9 +24,15 @@ const fileFilter = (req, file, cb) => {
 }
 
 const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } 
+  storage: diskStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }
+})
+
+export const uploadMemory = multer({
+  storage: memoryStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }
 })
 
 export default upload

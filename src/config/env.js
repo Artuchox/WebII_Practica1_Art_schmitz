@@ -10,6 +10,9 @@ const envSchema = z.object({
     JWT_REFRESH_SECRET:      z.string().min(32, 'JWT_REFRESH_SECRET debe tener al menos 32 caracteres'),
     JWT_REFRESH_EXPIRES_IN:  z.string().default('7d'),
     SLACK_WEBHOOK:           z.string().url().optional(),
+    CLOUDINARY_CLOUD_NAME:   z.string(),
+    CLOUDINARY_API_KEY:      z.string(),
+    CLOUDINARY_API_SECRET:   z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);
