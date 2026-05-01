@@ -7,6 +7,7 @@ import sanitizeBody from './middleware/sanitize.middleware.js';
 import userRoutes from './routes/user.routes.js'
 import clientRoutes from './routes/client.routes.js'
 import projectRoutes from './routes/project.routes.js'
+import deliveryNoteRoutes from './routes/deliverynote.routes.js'
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './docs/swagger.js';
 import morganBody from 'morgan-body';
@@ -38,6 +39,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/api/user', userRoutes)
 app.use('/api/client', clientRoutes)
 app.use('/api/project', projectRoutes)
+app.use('/api/deliverynote', deliveryNoteRoutes)
 app.use(errorHandler)
 
 export default app
