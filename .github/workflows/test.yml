@@ -1,4 +1,4 @@
-name: CI
+name: test
 
 on:
   push:
@@ -28,7 +28,6 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 3000
-          DB_URI: ${{ secrets.DB_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_EXPIRES_IN: 15m
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
