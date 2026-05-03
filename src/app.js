@@ -15,6 +15,16 @@ import { loggerStream } from './utils/handleLogger.js';
 
 
 const app = express()
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: { origin: '*' }
+})
+ 
+io.on('connection', (socket) => {
+  socket.on('disconnect', () => {})
+})
+ 
+export { io }
 app.use(express.json());
 app.use(helmet());
 app.use(sanitizeBody);
@@ -33,7 +43,13 @@ morganBody(app, {
 })
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok' })
+  const dbState = mongoose.connection.readyState
+  res.status(200).json({
+    status:    'ok',
+    db:        dbState === 1 ? 'connected' : 'disconnected',
+    uptime:    process.uptime(),
+    timestamp: new Date().toISOString()
+  })
 })
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/api/user', userRoutes)
@@ -42,4 +58,5 @@ app.use('/api/project', projectRoutes)
 app.use('/api/deliverynote', deliveryNoteRoutes)
 app.use(errorHandler)
 
+export { httpServer }
 export default app
