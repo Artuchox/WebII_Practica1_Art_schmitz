@@ -10,7 +10,7 @@ import routes from './routes/index.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpecs from './config/swagger.js'
 import morganBody from 'morgan-body'
-import { loggerStream } from './utils/handleLogger.js'
+import { loggerStream } from './services/logger.service.js'
 import mongoose from 'mongoose'
 
 const app = express()
