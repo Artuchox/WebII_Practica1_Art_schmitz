@@ -1,7 +1,7 @@
 // src/app.js
 import express from 'express'
 import { createServer } from 'node:http'
-import { Server } from 'socket.io'
+import { initSocket } from './socket.js'
 import helmet from 'helmet';
 import errorHandler from './middleware/error-handler.js'
 import sanitizeBody from './middleware/sanitize.middleware.js'
@@ -15,17 +15,8 @@ import mongoose from 'mongoose'
 
 const app = express()
 const httpServer = createServer(app)
-const io = new Server(httpServer, {
-  cors: { origin: '*' }
-})
- 
-io.on('connection', (socket) => {
-  socket.on('join:company', (companyId) => {
-    socket.join(`company:${companyId}`)
-  })
-  socket.on('disconnect', () => {})
-})
- 
+
+initSocket(httpServer)
 
 app.use(express.json());
 app.use(helmet());
