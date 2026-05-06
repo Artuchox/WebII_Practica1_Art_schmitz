@@ -5,6 +5,7 @@ import Project from '../models/Project.js'
 import AppError from '../utils/AppError.js'
 import { uploadImage, uploadPdf } from '../services/storage.service.js'
 import { generateDeliveryNotePdf } from '../services/pdf.service.js'
+import { io } from '../app.js'
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
@@ -32,6 +33,7 @@ export const createDeliveryNote = async (req, res, next) => {
       workers
     })
 
+    io.to(`company:${user.company}`).emit('deliverynote:created', { deliveryNote })
     res.status(201).json({ deliveryNote })
   } catch (error) {
     next(error)
@@ -160,6 +162,7 @@ export const signDeliveryNote = async (req, res, next) => {
       { new: true }
     )
 
+    io.to(`company:${user.company}`).emit('deliverynote:signed', { deliveryNote: updated })
     res.status(200).json({ deliveryNote: updated })
   } catch (error) {
     next(error)

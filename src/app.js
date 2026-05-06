@@ -3,7 +3,6 @@ import express from 'express'
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit'
 import errorHandler from './middleware/error-handler.js'
 import sanitizeBody from './middleware/sanitize.middleware.js'
 import limiter from './middleware/rate-limit.js'
@@ -21,10 +20,13 @@ const io = new Server(httpServer, {
 })
  
 io.on('connection', (socket) => {
+  socket.on('join:company', (companyId) => {
+    socket.join(`company:${companyId}`)
+  })
   socket.on('disconnect', () => {})
 })
  
-export { io }
+
 app.use(express.json());
 app.use(helmet());
 app.use(sanitizeBody);
