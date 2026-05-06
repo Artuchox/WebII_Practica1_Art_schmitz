@@ -66,7 +66,7 @@ describe('Client Endpoints', () => {
         .send(testClient)
         .expect(409)
 
-      expect(res.body.error).toBe(true)
+      expect(res.body).toHaveProperty('message')
     })
 
     it('debería rechazar sin autenticación', async () => {

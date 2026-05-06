@@ -158,4 +158,30 @@ describe('Project Endpoints', () => {
         .expect(200)
     })
   })
+
+  describe('Casos de error adicionales', () => {
+    it('debería rechazar actualizar proyecto inexistente', async () => {
+      await request(app)
+        .put('/api/project/65f8b3a2c9d1e20012345678')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Test' })
+        .expect(404)
+    })
+
+    it('debería rechazar eliminar proyecto inexistente', async () => {
+      await request(app)
+        .delete('/api/project/65f8b3a2c9d1e20012345678')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404)
+    })
+
+    it('debería filtrar proyectos por cliente', async () => {
+      const res = await request(app)
+        .get(`/api/project?client=${clientId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(Array.isArray(res.body.projects)).toBe(true)
+    })
+  })
 })

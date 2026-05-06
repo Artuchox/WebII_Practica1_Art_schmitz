@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.js'
 import notificationService from '../services/notification.service.js'
 import env from '../config/env.js'
 import Company from '../models/Company.js'
-import { sendVerificationEmail } from '../services/mail.service.js'
+import { sendVerificationEmail, sendInvitationEmail  } from '../services/mail.service.js'
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(

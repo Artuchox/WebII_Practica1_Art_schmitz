@@ -154,9 +154,44 @@ describe('DeliveryNote Endpoints', () => {
 
       expect(res.body.deliveryNote.description).toBe('Descripción actualizada')
     })
+
+    it('debería rechazar actualizar albarán inexistente', async () => {
+      await request(app)
+        .put('/api/deliverynote/65f8b3a2c9d1e20012345678')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ description: 'Test' })
+        .expect(404)
+    })
+  })
+
+  describe('GET /api/deliverynote con filtros', () => {
+    it('debería filtrar por proyecto', async () => {
+      const res = await request(app)
+        .get(`/api/deliverynote?project=${projectId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(Array.isArray(res.body.deliveryNotes)).toBe(true)
+    })
+
+    it('debería filtrar por signed=false', async () => {
+      const res = await request(app)
+        .get('/api/deliverynote?signed=false')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200)
+
+      expect(Array.isArray(res.body.deliveryNotes)).toBe(true)
+    })
   })
 
   describe('DELETE /api/deliverynote/:id', () => {
+    it('debería rechazar eliminar albarán inexistente', async () => {
+      await request(app)
+        .delete('/api/deliverynote/65f8b3a2c9d1e20012345678')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404)
+    })
+
     it('debería eliminar un albarán no firmado', async () => {
       await request(app)
         .delete(`/api/deliverynote/${deliveryNoteId}`)
