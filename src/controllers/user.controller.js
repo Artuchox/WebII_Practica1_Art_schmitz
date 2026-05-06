@@ -6,6 +6,7 @@ import AppError from '../utils/AppError.js'
 import notificationService from '../services/notification.service.js'
 import env from '../config/env.js'
 import Company from '../models/Company.js'
+import { sendVerificationEmail } from '../services/mail.service.js'
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(
@@ -33,7 +34,6 @@ export const register = async (req, res, next) => {
     if (existingUser) throw AppError.conflict('El email ya está registrado')
 
     const hashedPassword = await bcrypt.hash(password, 10)
-
     const verificationCode = generateVerificationCode()
 
     const user = await User.create({
@@ -44,6 +44,12 @@ export const register = async (req, res, next) => {
     })
 
     notificationService.emit('user:registered', { email: user.email })
+
+    try {
+      await sendVerificationEmail(user.email, verificationCode)
+    } catch (mailError) {
+      console.error('Error enviando email de verificación:', mailError.message)
+    }
 
     const { accessToken, refreshToken } = generateTokens(user._id)
 
@@ -103,6 +109,7 @@ export const login = async (req, res, next) => {
 
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) throw AppError.unauthorized('Credenciales incorrectas')
+
     const { accessToken, refreshToken } = generateTokens(user._id)
 
     res.status(200).json({
@@ -118,6 +125,7 @@ export const login = async (req, res, next) => {
     next(error)
   }
 }
+
 export const updatePersonalData = async (req, res, next) => {
   try {
     const { name, lastName, nif } = req.body
@@ -190,7 +198,7 @@ export const uploadLogo = async (req, res, next) => {
     }
 
     const logoUrl = `/uploads/${req.file.filename}`
-    
+
     const company = await Company.findByIdAndUpdate(
       user.company,
       { logo: logoUrl },
@@ -221,71 +229,71 @@ export const getProfile = async (req, res, next) => {
 
 export const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken } = req.body
 
     if (!refreshToken) {
-      throw AppError.unauthorized('Refresh token no proporcionado');
+      throw AppError.unauthorized('Refresh token no proporcionado')
     }
 
-    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
-    const tokens = generateTokens(decoded.id);
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET)
+    const tokens = generateTokens(decoded.id)
 
-    res.status(200).json(tokens);
+    res.status(200).json(tokens)
   } catch (error) {
-    next(AppError.unauthorized('Refresh token inválido o expirado'));
+    next(AppError.unauthorized('Refresh token inválido o expirado'))
   }
-};
+}
 
 export const logout = async (req, res, next) => {
   try {
-    res.status(200).json({ message: 'Sesión cerrada correctamente' });
+    res.status(200).json({ message: 'Sesión cerrada correctamente' })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 export const deleteUser = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const isSoftDelete = req.query.soft === 'true';
+    const userId = req.user._id
+    const isSoftDelete = req.query.soft === 'true'
 
     if (isSoftDelete) {
-      await User.findByIdAndUpdate(userId, { deleted: true });
+      await User.findByIdAndUpdate(userId, { deleted: true })
     } else {
-      await User.findByIdAndDelete(userId);
+      await User.findByIdAndDelete(userId)
     }
 
-    notificationService.emit('user:deleted', { email: req.user.email });
+    notificationService.emit('user:deleted', { email: req.user.email })
 
-    res.status(200).json({ message: `Usuario eliminado (${isSoftDelete ? 'soft' : 'hard'})` });
+    res.status(200).json({ message: `Usuario eliminado (${isSoftDelete ? 'soft' : 'hard'})` })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 export const changePassword = async (req, res, next) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user._id);
+    const { currentPassword, newPassword } = req.body
+    const user = await User.findById(req.user._id)
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.password)
     if (!isMatch) {
-      throw AppError.unauthorized('La contraseña actual es incorrecta');
+      throw AppError.unauthorized('La contraseña actual es incorrecta')
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await User.findByIdAndUpdate(req.user._id, { password: hashedPassword });
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await User.findByIdAndUpdate(req.user._id, { password: hashedPassword })
 
-    res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+    res.status(200).json({ message: 'Contraseña actualizada correctamente' })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 export const inviteUser = async (req, res, next) => {
   try {
     const { email, name, lastName } = req.body
-    const adminUser = req.user 
+    const adminUser = req.user
 
     const existingUser = await User.findOne({ email })
     if (existingUser) throw AppError.conflict('El email ya está registrado en la plataforma')
@@ -297,10 +305,16 @@ export const inviteUser = async (req, res, next) => {
       password: 'temporaryPassword123',
       role: 'guest',
       company: adminUser.company,
-      status: 'pending' 
+      status: 'pending'
     })
 
     notificationService.emit('user:invited', { email: newUser.email })
+
+    try {
+      await sendInvitationEmail(newUser.email, newUser.name)
+    } catch (mailError) {
+      console.error('Error enviando email de invitación:', mailError.message)
+    }
 
     res.status(201).json({
       message: 'Usuario invitado correctamente',
