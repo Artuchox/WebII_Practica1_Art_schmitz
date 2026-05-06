@@ -1,6 +1,6 @@
 // src/services/notification.service.js
 import { EventEmitter } from 'node:events'
-import { sendSlackNotification } from '../utils/handleLogger.js'
+import { sendSlackNotification } from './logger.service.js'
 
 class NotificationService extends EventEmitter {}
 

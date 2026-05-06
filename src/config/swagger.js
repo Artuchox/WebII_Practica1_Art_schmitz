@@ -5,31 +5,18 @@ const options = {
   definition: {
     openapi: '3.0.3',
     info: {
-      title: 'API de Tracks - Express con Swagger',
+      title: 'API Final - Gestión de Albaranes',
       version: '1.0.0',
       description: 'API REST documentada con Swagger',
-      license: {
-        name: 'MIT',
-        url: 'https://spdx.org/licenses/MIT.html'
-      },
-      contact: {
-        name: 'Tu Nombre',
-        email: 'tu@email.com'
-      }
+      license: { name: 'MIT', url: 'https://spdx.org/licenses/MIT.html' },
+      contact: { name: 'Tu Nombre', email: 'tu@email.com' }
     },
     servers: [
-      {
-        url: 'http://localhost:3000',
-        description: 'Servidor de desarrollo'
-      }
+      { url: 'http://localhost:3000', description: 'Servidor de desarrollo' }
     ],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
       },
       schemas: {
         Error: {
@@ -457,7 +444,7 @@ const options = {
       }
     }
   },
-  apis: ['./src/routes/*.js']
+  apis: []
 };
 
 export default swaggerJsdoc(options);
