@@ -1,18 +1,18 @@
 // src/app.js
 import express from 'express'
+import { createServer } from 'node:http'
+import { Server } from 'socket.io'
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit from 'express-rate-limit'
 import errorHandler from './middleware/error-handler.js'
-import sanitizeBody from './middleware/sanitize.middleware.js';
-import userRoutes from './routes/user.routes.js'
-import clientRoutes from './routes/client.routes.js'
-import projectRoutes from './routes/project.routes.js'
-import deliveryNoteRoutes from './routes/deliverynote.routes.js'
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpecs from './docs/swagger.js';
-import morganBody from 'morgan-body';
-import { loggerStream } from './utils/handleLogger.js';
-
+import sanitizeBody from './middleware/sanitize.middleware.js'
+import limiter from './middleware/rate-limit.js'
+import routes from './routes/index.js'
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpecs from './config/swagger.js'
+import morganBody from 'morgan-body'
+import { loggerStream } from './utils/handleLogger.js'
+import mongoose from 'mongoose'
 
 const app = express()
 const httpServer = createServer(app)
@@ -28,13 +28,7 @@ export { io }
 app.use(express.json());
 app.use(helmet());
 app.use(sanitizeBody);
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { status: 'error', message: 'Demasiadas peticiones, intenta de nuevo más tarde' },
-  standardHeaders: true,
-  legacyHeaders: false
-}));
+app.use(limiter)
 app.use('/uploads', express.static('uploads'))
 morganBody(app, {
   noColors: true,
@@ -51,11 +45,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   })
 })
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-app.use('/api/user', userRoutes)
-app.use('/api/client', clientRoutes)
-app.use('/api/project', projectRoutes)
-app.use('/api/deliverynote', deliveryNoteRoutes)
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
+app.use('/api', routes)
 app.use(errorHandler)
 
 export { httpServer }
